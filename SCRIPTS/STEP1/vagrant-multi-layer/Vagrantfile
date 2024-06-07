@@ -1,0 +1,73 @@
+Vagrant.configure("2") do |config|
+  # Define the load balancer node
+  config.vm.define "loadbalancer" do |lb|
+    lb.vm.box = "ubuntu/bionic64"
+    lb.vm.network "private_network", ip: "192.168.33.10"
+    lb.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y nginx
+      # Configure nginx as load balancer
+      rm /etc/nginx/sites-enabled/default
+      cat <<EOL > /etc/nginx/conf.d/loadbalancer.conf
+      upstream webservers {
+          server 192.168.33.11;
+          server 192.168.33.12;
+      }
+      server {
+          listen 80;
+          location / {
+              proxy_pass http://webservers;
+              proxy_set_header Host \$host;
+              proxy_set_header X-Real-IP \$remote_addr;
+              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto \$scheme;
+          }
+      }
+      EOL
+      systemctl restart nginx
+    SHELL
+  end
+
+  # Define the first web server node
+  config.vm.define "web1" do |web1|
+    web1.vm.box = "ubuntu/bionic64"
+    web1.vm.network "private_network", ip: "192.168.33.11"
+    web1.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y apache2 php8.1 php8.1-cli php8.1-common php8.1-mysql php8.1-pgsql php8.1-pdo php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl php8.1-xml php8.1-bcmath zip unzip
+      systemctl enable apache2
+      systemctl start apache2
+      # Configure Apache
+      echo "<?php phpinfo(); ?>" > /var/www/html/index.php
+    SHELL
+  end
+
+  # Define the second web server node
+  config.vm.define "web2" do |web2|
+    web2.vm.box = "ubuntu/bionic64"
+    web2.vm.network "private_network", ip: "192.168.33.12"
+    web2.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y apache2 php8.1 php8.1-cli php8.1-common php8.1-mysql php8.1-pgsql php8.1-pdo php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl php8.1-xml php8.1-bcmath zip unzip
+      systemctl enable apache2
+      systemctl start apache2
+      # Configure Apache
+      echo "<?php phpinfo(); ?>" > /var/www/html/index.php
+    SHELL
+  end
+
+  # Define the database node
+  config.vm.define "db" do |db|
+    db.vm.box = "ubuntu/bionic64"
+    db.vm.network "private_network", ip: "192.168.33.13"
+    db.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+      apt-get install -y postgresql-14
+      systemctl enable postgresql
+      systemctl start postgresql
+      # Configure PostgreSQL
+      sudo -u postgres psql -c "CREATE USER vagrant WITH SUPERUSER PASSWORD 'vagrant';"
+      sudo -u postgres createdb -O vagrant vagrant
+    SHELL
+  end
+end
