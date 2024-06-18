@@ -60,3 +60,33 @@ Vagrant.configure("2") do |config|
     ws2.vm.provision "shell", path: "./provision/web.sh"
     ws2.vm.synced_folder "app/", "/var/www/html"
   end
+  
+    # Database Server
+    config.vm.define "dbserver" do |db|
+      db.vm.box = "bento/ubuntu-22.04"
+      db.vm.hostname = "dbserver"
+      db.vm.network :private_network, ip: "192.168.44.30"
+      db.vm.provider "virtualbox" do |v|
+        v.name = "Project_O-dbserver"
+        v.memory = 1024
+        v.cpus = 1
+        v.linked_clone = true
+      end
+      db.vm.provision "shell", path: "./provision/db.sh"
+    end
+  
+    # WebSocket Server
+    config.vm.define "wsserver" do |ws|
+      ws.vm.box = "bento/ubuntu-22.04"
+      ws.vm.hostname = "wsserver"
+      ws.vm.network :private_network, ip: "192.168.44.40"
+      ws.vm.provider "virtualbox" do |v|
+        v.name = "Project_O-wsserver"
+        v.memory = 1024
+        v.cpus = 1
+        v.linked_clone = true
+      end
+      ws.vm.provision "shell", path: "./provision/ws.sh"
+      ws.vm.synced_folder "ws/", "/var/www/ws"
+    end
+  end
