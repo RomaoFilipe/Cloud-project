@@ -1,11 +1,41 @@
 <?php
-include '_dotenv.php';
+// Function to load environment variables from .env file
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        throw new Exception("File not found: " . $path);
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim($value);
+        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
+            putenv(sprintf('%s=%s', $name, $value));
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
+}
+
+// Load environment variables from .env file
+try {
+    // Adjust the path to the .env file
+    loadEnv(__DIR__ . '/../.env');
+} catch (Exception $e) {
+    die("Error loading .env file: " . $e->getMessage());
+}
 
 // Function to handle database connection
 function connectToDatabase($db_host, $db_port, $db_name, $db_user, $db_pass)
 {
     try {
-        return new PDO("pgsql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_pass);
+        $pdo = new PDO("pgsql:host=$db_host;port=$db_port;dbname=$db_name", $db_user, $db_pass);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $pdo;
     } catch (PDOException $e) {
         die("Error: " . $e->getMessage());
     }
@@ -60,6 +90,13 @@ function fetchMessages($pdo)
     $stmt = $pdo->query("SELECT * FROM messages ORDER BY id DESC");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// Read database configuration from environment variables
+$db_host = getenv('DB_HOST');
+$db_port = getenv('DB_PORT');
+$db_name = getenv('DB_NAME');
+$db_user = getenv('DB_USER');
+$db_pass = getenv('DB_PASS');
 
 $pdo = connectToDatabase($db_host, $db_port, $db_name, $db_user, $db_pass);
 
