@@ -1,63 +1,51 @@
 <?php
-require 'vendor/autoload.php';
-
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
-use Ratchet\Server\IoServer;
-use Ratchet\Http\HttpServer;
-use Ratchet\WebSocket\WsServer;
 
-class NotificationServer implements MessageComponentInterface
-{
-    protected $clients;
+require __DIR__ . '/vendor/autoload.php';
 
-    public function __construct()
-    {
-        $this->clients = new \SplObjectStorage();
-    }
-
-    public function onOpen(ConnectionInterface $conn)
-    {
+class Chat implements MessageComponentInterface {
+    public function onOpen(ConnectionInterface $conn) {
+        // Store the new connection
         $this->clients->attach($conn);
-        echo "New connection! ({$conn->resourceId})\n";
     }
 
-    public function onMessage(ConnectionInterface $from, $message)
-    {
-        $data = json_decode($message, true);
-        // Add timestamp and sender ID to the message
-        $data['timestamp'] = date('Y-m-d H:i:s');
-        $data['sender_id'] = $from->resourceId;
-        echo "New message ({$data['message']}) from ({$from->resourceId})\n";
-        $data['message'] = htmlspecialchars($data['message'], ENT_QUOTES, 'UTF-8');
-       
-        $message = json_encode($data);
-        // Broadcast the modified message to all connected clients
+    public function onMessage(ConnectionInterface $from, $msg) {
         foreach ($this->clients as $client) {
-            $client->send($message);
+            if ($from !== $client) {
+                // Send message to everyone except the sender
+                $client->send($msg);
+            }
         }
     }
 
-    public function onClose(ConnectionInterface $conn)
-    {
+    public function onClose(ConnectionInterface $conn) {
+        // The connection is closed, remove it, as we can no longer send it messages
         $this->clients->detach($conn);
-        echo "Connection {$conn->resourceId} has disconnected\n";
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e)
-    {
-        echo "An error has occurred: {$e->getMessage()}\n";
+    public function onError(ConnectionInterface $conn, \Exception $e) {
         $conn->close();
+    }
+
+    public function __construct() {
+        $this->clients = new \SplObjectStorage;
     }
 }
 
-$server = IoServer::factory(
-    new HttpServer(
-        new WsServer(
-            new NotificationServer()
+// Load environment variables
+$ws_host = getenv('WS_HOST') ?: '0.0.0.0';
+$ws_port = getenv('WS_PORT') ?: 8000;
+
+// Run the server application through the WebSocket protocol on port 8000
+$server = \Ratchet\Server\IoServer::factory(
+    new \Ratchet\Http\HttpServer(
+        new \Ratchet\WebSocket\WsServer(
+            new Chat()
         )
     ),
-    8000
+    $ws_port,
+    $ws_host
 );
 
 $server->run();
