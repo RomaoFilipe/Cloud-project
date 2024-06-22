@@ -61,6 +61,23 @@ Vagrant.configure("2") do |config|
     ws2.vm.synced_folder "app/", "/var/www/html"
   end
 
+  # Web Server 3
+  config.vm.define "webserver3" do |ws3|
+    ws3.vm.box = "bento/ubuntu-22.04"
+    ws3.vm.hostname = "webserver3"
+    ws3.vm.network :private_network, ip: "192.168.44.23"
+    ws3.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-webserver3"
+      v.memory = 2048
+      v.cpus = 2
+      v.linked_clone = true
+    end
+    ws3.vm.provision "shell", path: "./provision/web.sh"
+    ws3.vm.synced_folder "app/", "/var/www/html"
+  end
+
+
+
   # Database Server
   config.vm.define "dbserver" do |db|
     db.vm.box = "bento/ubuntu-22.04"

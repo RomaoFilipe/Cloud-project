@@ -16,11 +16,13 @@ map \$http_upgrade \$connection_upgrade {
 upstream web_servers {
     server 192.168.44.21;  # IP do servidor web1
     server 192.168.44.22;  # IP do servidor web2
+    server 192.168.44.23;  # IP do servidor web3
 }
  
 upstream websocket {
     server 192.168.44.21:8000;  # Porta do servidor WebSocket no web1
     server 192.168.44.22:8000;  # Porta do servidor WebSocket no web2
+    server 192.168.44.23:8000;  # Porta do servidor WebSocket no web3
 }
  
 server {
