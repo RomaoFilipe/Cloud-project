@@ -15,4 +15,25 @@ echo -e "$MSG_COLOR$(hostname): Install dependencies for websockets server\033[0
 cd /vagrant/ws
 sudo -u vagrant bash -c 'composer install'
 
-echo -e "\033[42m$(hostname): Finished! Start the WebSocket server manually or configure it as a service\033[0m"
+echo -e "$MSG_COLOR$(hostname): Create systemd service for WebSocket server\033[0m"
+cat <<EOF | sudo tee /etc/systemd/system/websockets.service
+[Unit]
+Description=WebSockets Server
+After=network.target
+
+[Service]
+Type=simple
+User=vagrant
+WorkingDirectory=/vagrant/ws
+ExecStart=/usr/bin/php /vagrant/ws/websockets_server.php
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo -e "$MSG_COLOR$(hostname): Enable and start WebSocket server\033[0m"
+sudo systemctl enable websockets.service
+sudo systemctl start websockets.service
+
+echo -e "\033[42m$(hostname): Finished!\033[0m"
