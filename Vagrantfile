@@ -3,91 +3,90 @@
 
 Vagrant.configure("2") do |config|
 
-  # Load Balancer 1
-  config.vm.define "loadbalancer1" do |lb1|
-    lb1.vm.box = "bento/ubuntu-22.04"
-    lb1.vm.hostname = "loadbalancer1"
-    lb1.vm.network :private_network, ip: "192.168.44.11"
-    lb1.vm.provider "virtualbox" do |v|
+  # Configuração do servidor Consul
+  config.vm.define "consul" do |consul|
+    consul.vm.box = "bento/ubuntu-22.04"
+    consul.vm.hostname = "consul"
+    consul.vm.network :private_network, ip: "192.168.44.11"
+    consul.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-consul"
+      v.memory = 1024
+      v.cpus = 2
+      v.linked_clone = true
+    end
+    consul.vm.provision "shell", path: "./provision/consul.sh"
+  end
+
+  # Configuração do primeiro load balancer
+  config.vm.define "loadbalancer1" do |lb|
+    lb.vm.box = "bento/ubuntu-22.04"
+    lb.vm.hostname = "loadbalancer1"
+    lb.vm.network :private_network, ip: "192.168.44.10"
+    lb.vm.provider "virtualbox" do |v|
       v.name = "Project_O-loadbalancer1"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
     end
-    lb1.vm.provision "shell", path: "./provision/nginx_loadbalancer.sh"
+    lb.vm.provision "shell", path: "./provision/loadbalancer.sh"
   end
 
-  # Load Balancer 2
-  config.vm.define "loadbalancer2" do |lb2|
-    lb2.vm.box = "bento/ubuntu-22.04"
-    lb2.vm.hostname = "loadbalancer2"
-    lb2.vm.network :private_network, ip: "192.168.44.12"
-    lb2.vm.provider "virtualbox" do |v|
+  # Configuração do segundo load balancer
+  config.vm.define "loadbalancer2" do |lb|
+    lb.vm.box = "bento/ubuntu-22.04"
+    lb.vm.hostname = "loadbalancer2"
+    lb.vm.network :private_network, ip: "192.168.44.21"
+    lb.vm.provider "virtualbox" do |v|
       v.name = "Project_O-loadbalancer2"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
     end
-    lb2.vm.provision "shell", path: "./provision/nginx_loadbalancer.sh"
+    lb.vm.provision "shell", path: "./provision/loadbalancer2.sh"
   end
 
-  # Web Server 1
-  config.vm.define "webserver1" do |ws1|
-    ws1.vm.box = "bento/ubuntu-22.04"
-    ws1.vm.hostname = "webserver1"
-    ws1.vm.network :private_network, ip: "192.168.44.21"
-    ws1.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-webserver1"
-      v.memory = 2048
-      v.cpus = 2
-      v.linked_clone = true
+  # Configuração dos servidores web
+  (1..3).each do |i|
+    config.vm.define "webapp#{i}" do |web|
+      web.vm.box = "bento/ubuntu-22.04"
+      web.vm.hostname = "webapp#{i}"
+      web.vm.network :private_network, ip: "192.168.44.1#{i}"
+      web.vm.provider "virtualbox" do |v|
+        v.name = "Project_O-webapp#{i}"
+        v.memory = 1024
+        v.cpus = 2
+        v.linked_clone = true
+      end
+      web.vm.provision "shell", path: "./provision/web.sh"
     end
-    ws1.vm.provision "shell", path: "./provision/web.sh"
-    ws1.vm.synced_folder "app/", "/var/www/html"
   end
 
-  # Web Server 2
-  config.vm.define "webserver2" do |ws2|
-    ws2.vm.box = "bento/ubuntu-22.04"
-    ws2.vm.hostname = "webserver2"
-    ws2.vm.network :private_network, ip: "192.168.44.22"
-    ws2.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-webserver2"
-      v.memory = 2048
-      v.cpus = 2
-      v.linked_clone = true
-    end
-    ws2.vm.provision "shell", path: "./provision/web.sh"
-    ws2.vm.synced_folder "app/", "/var/www/html"
-  end
-
-  # Database Server
-  config.vm.define "dbserver" do |db|
+  # Configuração do servidor de banco de dados
+  config.vm.define "database" do |db|
     db.vm.box = "bento/ubuntu-22.04"
-    db.vm.hostname = "dbserver"
-    db.vm.network :private_network, ip: "192.168.44.30"
+    db.vm.hostname = "database"
+    db.vm.network :private_network, ip: "192.168.44.20"
     db.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-dbserver"
+      v.name = "Project_O-database"
       v.memory = 1024
-      v.cpus = 1
+      v.cpus = 2
       v.linked_clone = true
     end
-    db.vm.provision "shell", path: "./provision/db.sh"
+    db.vm.provision "shell", path: "./provision/database.sh"
   end
 
-  # WebSocket Server
-  config.vm.define "wsserver" do |ws|
+  # Configuração do servidor WebSockets
+  config.vm.define "websockets" do |ws|
     ws.vm.box = "bento/ubuntu-22.04"
-    ws.vm.hostname = "wsserver"
-    ws.vm.network :private_network, ip: "192.168.44.40"
+    ws.vm.hostname = "websockets"
+    ws.vm.network :private_network, ip: "192.168.44.30"
     ws.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-wsserver"
+      v.name = "Project_O-websockets"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
     end
-    ws.vm.provision "shell", path: "./provision/ws.sh"
-    ws.vm.synced_folder "ws/", "/var/www/ws"
+    ws.vm.provision "shell", path: "./provision/websockets.sh"
   end
 
 end
