@@ -7,12 +7,12 @@ sudo apt-get update
 echo -e "$MSG_COLOR$(hostname): Install NGINX and Keepalived\033[0m"
 sudo apt-get install -y nginx keepalived
 
-echo -e "$MSG_COLOR$(hostname): Configure NGINX for load balancing\033[0m"
+echo -e "$MSG_COLOR$(hostname): Configure NGINX for load balancing with health checks\033[0m"
 cat <<EOF | sudo tee /etc/nginx/conf.d/loadbalancer.conf
 upstream web_backend {
-    server 192.168.44.11;
-    server 192.168.44.12;
-    server 192.168.44.13;
+    server 192.168.44.11 max_fails=3 fail_timeout=30s;
+    server 192.168.44.12 max_fails=3 fail_timeout=30s;
+    server 192.168.44.13 max_fails=3 fail_timeout=30s;
 }
 
 server {
@@ -25,6 +25,12 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /nginx_status {
+        stub_status on;
+        access_log   off;
+        allow all;
     }
 }
 EOF
