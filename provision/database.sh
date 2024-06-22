@@ -29,9 +29,14 @@ sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SC
 sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO myuser;"
 sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO myuser;"
 
-echo -e "$MSG_COLOR$(hostname): View users and databases in PostgreSQL\033[0m"
-sudo -u postgres psql -c "\du"
-sudo -u postgres psql -c "\list"
-sudo -u postgres psql -d mydatabase -c "\dt"
+echo -e "$MSG_COLOR$(hostname): Install Redis\033[0m"
+sudo apt-get install -y redis-server
 
-echo -e "\033[42m$(hostname): Finished!\033[0m"
+echo -e "$MSG_COLOR$(hostname): Configure Redis to bind to all interfaces\033[0m"
+sudo sed -i "s/^bind 127.0.0.1 ::1/bind 0.0.0.0/" /etc/redis/redis.conf
+sudo sed -i "s/^protected-mode yes/protected-mode no/" /etc/redis/redis.conf
+
+echo -e "$MSG_COLOR$(hostname): Restart Redis\033[0m"
+sudo systemctl restart redis-server
+
+echo -e "$MSG_COLOR$(hostname): Finished provisioning database and Redis!\033[0m"
