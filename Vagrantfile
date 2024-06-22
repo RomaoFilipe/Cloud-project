@@ -61,18 +61,60 @@ Vagrant.configure("2") do |config|
     ws2.vm.synced_folder "app/", "/var/www/html"
   end
 
-  # Database Server
-  config.vm.define "dbserver" do |db|
-    db.vm.box = "bento/ubuntu-22.04"
-    db.vm.hostname = "dbserver"
-    db.vm.network :private_network, ip: "192.168.44.30"
-    db.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-dbserver"
+  # Database Server 1
+  config.vm.define "dbserver1" do |db1|
+    db1.vm.box = "bento/ubuntu-22.04"
+    db1.vm.hostname = "dbserver1"
+    db1.vm.network :private_network, ip: "192.168.44.30"
+    db1.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-dbserver1"
       v.memory = 1024
-      v.cpus = 1
+      v.cpus = 2
       v.linked_clone = true
     end
-    db.vm.provision "shell", path: "./provision/db.sh"
+    db1.vm.provision "shell", path: "./provision/db1.sh"
+  end
+
+  # Database Server 2
+  config.vm.define "dbserver2" do |db2|
+    db2.vm.box = "bento/ubuntu-22.04"
+    db2.vm.hostname = "dbserver2"
+    db2.vm.network :private_network, ip: "192.168.44.31"
+    db2.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-dbserver2"
+      v.memory = 1024
+      v.cpus = 2
+      v.linked_clone = true
+    end
+    db2.vm.provision "shell", path: "./provision/db2.sh"
+  end
+
+  # Database Server 3
+  config.vm.define "dbserver3" do |db3|
+    db3.vm.box = "bento/ubuntu-22.04"
+    db3.vm.hostname = "dbserver3"
+    db3.vm.network :private_network, ip: "192.168.44.32"
+    db3.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-dbserver3"
+      v.memory = 1024
+      v.cpus = 2
+      v.linked_clone = true
+    end
+    db3.vm.provision "shell", path: "./provision/db3.sh"
+  end
+
+   # etcd Server
+   config.vm.define "etcdserver" do |etcd|
+    etcd.vm.box = "bento/ubuntu-22.04"
+    etcd.vm.hostname = "etcdserver"
+    etcd.vm.network :private_network, ip: "192.168.44.50"
+    etcd.vm.provider "virtualbox" do |v|
+      v.name = "Project_O-etcdserver"
+      v.memory = 1024
+      v.cpus = 2
+      v.linked_clone = true
+    end
+    etcd.vm.provision "shell", path: "./provision/etcd.sh"
   end
 
   # WebSocket Server
