@@ -7,9 +7,9 @@ Vagrant.configure("2") do |config|
   config.vm.define "consul" do |consul|
     consul.vm.box = "bento/ubuntu-22.04"
     consul.vm.hostname = "consul"
-    consul.vm.network :private_network, ip: "192.168.44.11"
+    consul.vm.network :private_network, ip: "192.168.44.15"
     consul.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-consul"
+      v.name = "Project_A-consul"
       v.memory = 1024
       v.cpus = 2
       v.linked_clone = true
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
     lb.vm.hostname = "loadbalancer1"
     lb.vm.network :private_network, ip: "192.168.44.10"
     lb.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-loadbalancer1"
+      v.name = "Project_A-loadbalancer1"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
     lb.vm.hostname = "loadbalancer2"
     lb.vm.network :private_network, ip: "192.168.44.21"
     lb.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-loadbalancer2"
+      v.name = "Project_A-loadbalancer2"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
@@ -52,7 +52,7 @@ Vagrant.configure("2") do |config|
       web.vm.hostname = "webapp#{i}"
       web.vm.network :private_network, ip: "192.168.44.1#{i}"
       web.vm.provider "virtualbox" do |v|
-        v.name = "Project_O-webapp#{i}"
+        v.name = "Project_A-webapp#{i}"
         v.memory = 1024
         v.cpus = 2
         v.linked_clone = true
@@ -67,7 +67,7 @@ Vagrant.configure("2") do |config|
     db.vm.hostname = "database"
     db.vm.network :private_network, ip: "192.168.44.20"
     db.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-database"
+      v.name = "Project_A-database"
       v.memory = 1024
       v.cpus = 2
       v.linked_clone = true
@@ -81,7 +81,7 @@ Vagrant.configure("2") do |config|
     ws.vm.hostname = "websockets"
     ws.vm.network :private_network, ip: "192.168.44.30"
     ws.vm.provider "virtualbox" do |v|
-      v.name = "Project_O-websockets"
+      v.name = "Project_A-websockets"
       v.memory = 1024
       v.cpus = 1
       v.linked_clone = true
