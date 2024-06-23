@@ -28,7 +28,8 @@ cat <<EOF | sudo tee /etc/consul.d/config.json
   "log_level": "INFO",
   "enable_script_checks": true,
   "leave_on_terminate": true,
-  "skip_leave_on_interrupt": true
+  "skip_leave_on_interrupt": true,
+  "ui": true
 }
 EOF
 
