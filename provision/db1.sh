@@ -8,6 +8,13 @@ echo -e "$MSG_COLOR$(hostname): Install PostgreSQL and Patroni dependencies\033[
 sudo apt-get install -y etcd postgresql-14 python3-pip
 sudo pip3 install patroni[etcd]
 
+echo -e "$MSG_COLOR$(hostname): Configure PostgreSQL\033[0m"
+# Update pg_hba.conf
+sudo bash -c "echo 'host all all 0.0.0.0/0 md5' >> /etc/postgresql/14/main/pg_hba.conf"
+
+# Update postgresql.conf
+sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/14/main/postgresql.conf
+
 echo -e "$MSG_COLOR$(hostname): Configure Patroni\033[0m"
 cat <<EOF | sudo tee /etc/patroni.yml
 scope: postgresql-ha
@@ -67,7 +74,7 @@ postgresql:
     unix_socket_directories: '/var/run/postgresql'
 EOF
 
-echo -e "$MSG_COLOR$(hostname): Configure post-init script for database and user setup\033[0m"
+echo -e "$MSG_COLOR$(hostname): Create Patroni post-init script\033[0m"
 cat <<EOF | sudo tee /etc/patroni_post_init.sh
 #!/bin/bash
 psql -c "CREATE USER myuser WITH PASSWORD 'mypassword';"
@@ -77,6 +84,24 @@ psql -d mydatabase -f /vagrant/provision/dump.sql
 EOF
 
 sudo chmod +x /etc/patroni_post_init.sh
+
+echo -e "$MSG_COLOR$(hostname): Create Patroni systemd service file\033[0m"
+cat <<EOF | sudo tee /etc/systemd/system/patroni.service
+[Unit]
+Description=Patroni
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/patroni /etc/patroni.yml
+KillMode=process
+TimeoutStopSec=30
+Restart=on-failure
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 echo -e "$MSG_COLOR$(hostname): Enable and start Patroni\033[0m"
 sudo systemctl daemon-reload
