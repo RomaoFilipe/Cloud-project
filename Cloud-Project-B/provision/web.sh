@@ -8,6 +8,7 @@ echo -e "$MSG_COLOR$(hostname): Install Apache HTTP Server\033[0m"
 sudo apt-get install -y apache2
 
 echo -e "$MSG_COLOR$(hostname): Install PHP 8.1\033[0m"
+# Install specific versions of PHP packages
 sudo apt install -y --no-install-recommends php8.1
 
 echo -e "$MSG_COLOR$(hostname): Install additional PHP 8.1 modules\033[0m"
@@ -23,11 +24,48 @@ sudo apt-get install -y \
     php8.1-curl \
     php8.1-xml \
     php8.1-bcmath \
-    php-redis \
     zip \
     unzip
 
+# sudo sh -c 'echo -e "<?php\nphpinfo();\n?>" > /var/www/html/phpinfo.php'
+
 sudo systemctl restart apache2
+
+echo -e "$MSG_COLOR$(hostname): Install PostgreSQL and its PHP extension\033[0m"
+# Install specific version of PostgreSQL
+sudo apt-get install -y postgresql-14 php-pgsql
+
+# Change to /tmp directory since the next commands will run as "postgres" user
+# to avoid could not change directory to "/home/vagrant": Permission denied
+cd /tmp
+
+echo -e "$MSG_COLOR$(hostname): Create a new PostgreSQL user and database\033[0m"
+sudo -u postgres psql -c "CREATE USER myuser WITH PASSWORD 'mypassword';"
+sudo -u postgres psql -c "CREATE DATABASE mydatabase OWNER myuser;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO myuser;"
+
+# peer access to myuser
+# sudo sh -c 'echo "local   all             myuser                                  peer" >> /etc/postgresql/14/main/pg_hba.conf'
+sudo service postgresql restart
+
+sudo -u postgres psql -d mydatabase -c "DROP TABLE test;"
+
+echo -e "$MSG_COLOR$(hostname): Import dump.sql and set user privileges\033[0m"
+# PGPASSWORD=mypassword sudo -u postgres psql -U myuser -h localhost -d mydatabase -f /vagrant/provision/dump.sql # change to ./provision/dump.sql
+sudo -u postgres psql -d mydatabase -f /vagrant/provision/dump.sql
+sudo -u postgres psql -d mydatabase -c "GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE messages TO myuser;" # uneeded?
+sudo -u postgres psql -d mydatabase -c "GRANT USAGE, SELECT, UPDATE ON SEQUENCE messages_id_seq TO myuser;"
+sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myuser;"
+sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO myuser;"
+sudo -u postgres psql -d mydatabase -c "GRANT ALL PRIVILEGES ON DATABASE mydatabase TO myuser;"
+
+echo -e "$MSG_COLOR$(hostname): View users and databases in PostgreSQL\033[0m"
+sudo -u postgres psql -c "\du"
+sudo -u postgres psql -c "\list"
+sudo -u postgres psql -d mydatabase -c "\dt"
+
+# Change back to the previous folder
+cd -
 
 echo -e "$MSG_COLOR$(hostname): Install Composer (PHP)\033[0m"
 cd ~
@@ -47,68 +85,6 @@ sudo cp /vagrant/provision/projectA.conf /etc/apache2/sites-available/
 sudo a2dissite 000-default.conf
 sudo a2ensite projectA.conf
 sudo systemctl reload apache2
-
-echo -e "$MSG_COLOR$(hostname): Configure PHP to use Redis for sessions\033[0m"
-sudo bash -c 'echo "session.save_handler = redis" >> /etc/php/8.1/apache2/php.ini'
-sudo bash -c 'echo "session.save_path = \"tcp://192.168.44.20:6379\"" >> /etc/php/8.1/apache2/php.ini'
-sudo systemctl restart apache2
-
-echo -e "$MSG_COLOR$(hostname): Install Consul\033[0m"
-sudo apt-get install -y consul
-
-# Determine the hostname and configure Consul accordingly
-hostname=$(hostname)
-
-if [[ "$hostname" == "webapp1" ]]; then
-    ip_address="192.168.44.11"
-    service_name="webapp1"
-elif [[ "$hostname" == "webapp2" ]]; then
-    ip_address="192.168.44.12"
-    service_name="webapp2"
-elif [[ "$hostname" == "webapp3" ]]; then
-    ip_address="192.168.44.13"
-    service_name="webapp3"
-else
-    echo -e "$MSG_COLOR$(hostname): Unknown hostname. Exiting...\033[0m"
-    exit 1
-fi
-
-echo -e "$MSG_COLOR$(hostname): Configure Consul for $service_name\033[0m"
-cat <<EOF | sudo tee /etc/consul.d/$service_name.json
-{
-  "service": {
-    "name": "$service_name",
-    "tags": ["web"],
-    "address": "$ip_address",
-    "port": 80,
-    "check": {
-      "http": "http://$ip_address",
-      "interval": "10s"
-    }
-  }
-}
-EOF
-
-# Create a data directory for Consul
-sudo mkdir -p /opt/consul
-
-echo -e "$MSG_COLOR$(hostname): Start Consul Agent\033[0m"
-sudo tee /etc/systemd/system/consul.service <<EOF
-[Unit]
-Description=Consul Agent
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d/ -bind=$ip_address -client=0.0.0.0 -retry-join=192.168.44.15 -data-dir=/opt/consul
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable consul
-sudo systemctl start consul
 
 echo -e "$MSG_COLOR$(hostname): Update deploy date @ .env file\033[0m"
 cd /vagrant/app

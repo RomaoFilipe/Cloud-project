@@ -1,0 +1,8 @@
+- elaborar Dockerfile
+- construir imagem -> docker build -t my_app_image .
+- correr imagem -> docker run -d -p 80:80 --name ProjB --hostname WebApp1 projb_frj
+
+
+Para remover container:
+docker stop nome-container
+docker rm nome-container
