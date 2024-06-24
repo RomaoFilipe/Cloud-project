@@ -61,18 +61,20 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  # Configuração do servidor de banco de dados
-  config.vm.define "database" do |db|
-    db.vm.box = "bento/ubuntu-22.04"
-    db.vm.hostname = "database"
-    db.vm.network :private_network, ip: "192.168.44.20"
-    db.vm.provider "virtualbox" do |v|
-      v.name = "Project_A-database"
-      v.memory = 1024
-      v.cpus = 2
-      v.linked_clone = true
+  # Configuração dos servidores de banco de dados
+  (1..3).each do |i|
+    config.vm.define "database#{i}" do |db|
+      db.vm.box = "bento/ubuntu-22.04"
+      db.vm.hostname = "database#{i}"
+      db.vm.network :private_network, ip: "192.168.44.3#{i}"
+      db.vm.provider "virtualbox" do |v|
+        v.name = "Project_A-database#{i}"
+        v.memory = 1024
+        v.cpus = 2
+        v.linked_clone = true
+      end
+      db.vm.provision "shell", path: "./provision/databases.sh", args: [i]
     end
-    db.vm.provision "shell", path: "./provision/database.sh"
   end
 
   # Configuração do servidor WebSockets
