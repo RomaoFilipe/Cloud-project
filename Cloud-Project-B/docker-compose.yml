@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app/public_html:/var/www/html
+    networks:
+      - cloud_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - cloud_network
+
+  db:
+    image: mysql:latest
+    container_name: db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: db_name
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_password
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - cloud_network
+
+  websockets:
+    build: ./ws
+    container_name: websockets
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - cloud_network
+    volumes:
+      - ./ws:/var/www/ws
+
+  web:
+    build: ./app
+    container_name: web
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - cloud_network
+    volumes:
+      - ./app:/var/www/app
+
+networks:
+  cloud_network:
+
+volumes:
+  db-data:
