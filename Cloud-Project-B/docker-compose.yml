@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  webapp:
+    image: webapp_frj:latest
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    networks:
+      - webnet
+    environment:
+      DATABASE_URL: postgres://myuser:mypassword@db:5432/mydatabase
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - webnet
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+  nginx:
+    image: nginx_frj:latest
+    ports:
+      - "80:80"
+    networks:
+      - webnet
+
+networks:
+  webnet:
+
+volumes:
+  db_data:

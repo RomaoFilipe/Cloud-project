@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-contrib \
     curl \
     git \
+    sudo \
     && apt-get clean
 
 # Instalar o Composer
@@ -48,7 +49,7 @@ RUN /etc/init.d/postgresql start \
     && psql --command "CREATE USER myuser WITH SUPERUSER PASSWORD 'mypassword';" \
     && createdb -O myuser mydatabase
 
-# Voltar para o utilizar root para continuar a configuração
+# Voltar para o utilizador root para continuar a configuração
 USER root
 
 # Copiar o dump.sql e outras configurações para o container
@@ -85,8 +86,26 @@ RUN composer install
 RUN ISO_DATE=$(TZ=Europe/Lisbon date -Iseconds) \
     && sed -i "s/^DEPLOY_DATE=.*/DEPLOY_DATE=\"$ISO_DATE\"/" .env
 
-# Porta do Apache
-EXPOSE 80
+# Expor portas para Apache e WebSocket
+EXPOSE 80 8080
 
-# Definir o comando padrão para iniciar o Apache e o PostgreSQL
-CMD service postgresql start && apachectl -D FOREGROUND
+# Configurar o serviço do WebSocket
+RUN echo '[Unit]\n\
+Description=WebSockets Server\n\
+After=network.target\n\
+\n\
+[Service]\n\
+Type=simple\n\
+User=root\n\
+WorkingDirectory=/var/www/ws\n\
+ExecStart=/usr/bin/php /var/www/ws/websockets_server.php\n\
+Restart=always\n\
+\n\
+[Install]\n\
+WantedBy=multi-user.target\n' > /etc/systemd/system/websockets.service
+
+# Ativar e iniciar o serviço WebSocket
+RUN systemctl enable websockets.service
+
+# Definir o comando padrão para iniciar o Apache, PostgreSQL e WebSocket
+CMD service postgresql start && service websockets start && apachectl -D FOREGROUND
