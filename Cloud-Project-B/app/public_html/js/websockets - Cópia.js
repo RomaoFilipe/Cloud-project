@@ -20,6 +20,7 @@ function getColor(senderId) {
     return senderColors[senderId];
 }
 
+
 // Event listener for form submission
 const messageForm = document.getElementById('messageForm');
 const messageInput = document.getElementById('messageInput');
@@ -33,7 +34,7 @@ messageForm.addEventListener('submit', function(event) {
     messageInput.value = '';
 });
 
-// Create a WebSocket connection using ws_uri from the HTML
+// Create a WebSocket connection
 const socket = new WebSocket(ws_uri);
 
 socket.onopen = function(event) {
@@ -85,10 +86,6 @@ socket.onclose = function(event) {
     statusDiv.classList.remove('alert-warning');
     statusDiv.classList.add('alert-danger');
     statusDiv.innerHTML = 'WebSocket connection closed. Please try again later.' + statusDiv.querySelector('.btn-close').outerHTML;
-};
-
-socket.onerror = function(error) {
-    console.log('WebSocket error: ', error);
 };
 
 // Send a message to the server

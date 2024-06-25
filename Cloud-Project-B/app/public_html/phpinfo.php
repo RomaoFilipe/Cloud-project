@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CNV - Project A</title>
+    <title>CNV - Project B</title>
     <!-- Load Bootstrap 5.3 CSS from a local copy -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/site.css">
