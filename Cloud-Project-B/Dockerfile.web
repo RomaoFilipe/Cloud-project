@@ -1,0 +1,56 @@
+# Dockerfile.web
+
+FROM ubuntu:20.04
+
+# Argumentos para a zona de tempo
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Atualizar e instalar pacotes
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository ppa:ondrej/php \
+    && apt-get update && apt-get install -y \
+    apache2 \
+    php8.1 \
+    php8.1-cli \
+    php8.1-common \
+    php8.1-pgsql \
+    php8.1-pdo \
+    php8.1-zip \
+    php8.1-gd \
+    php8.1-mbstring \
+    php8.1-curl \
+    php8.1-xml \
+    php8.1-bcmath \
+    unzip \
+    git \
+    zip \
+    curl \
+    sudo \
+    && apt-get clean
+
+# Instalar o Composer
+RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+
+# Copiar ficheiros de configuração do Apache
+COPY ./provision/projectB.conf /etc/apache2/sites-available/
+
+# Habilitar o site e módulos do Apache
+RUN a2dissite 000-default.conf \
+    && a2ensite projectB.conf \
+    && a2enmod rewrite
+
+# Copiar e instalar as dependências do projeto
+COPY ./app /var/www/app
+RUN chown -R www-data:www-data /var/www/app/public_html \
+    && chmod -R 755 /var/www/app/public_html
+
+WORKDIR /var/www/app
+RUN composer install
+
+# Expor a porta do Apache
+EXPOSE 80
+
+# Comando padrão para iniciar o Apache
+CMD ["apachectl", "-D", "FOREGROUND"]
