@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    image: cloud-project-b-web
+    image: fmacmahon/cloud-project-b-web:latest
     deploy:
       replicas: 3
       restart_policy:
@@ -13,7 +13,7 @@ services:
       - custom_network
 
   db:
-    image: cloud-project-b-db
+    image: fmacmahon/cloud-project-b-db:latest
     deploy:
       replicas: 2
       restart_policy:
@@ -28,7 +28,7 @@ services:
       - custom_network
 
   ws:
-    image: cloud-project-b-ws
+    image: fmacmahon/cloud-project-b-ws:latest
     deploy:
       replicas: 1
       restart_policy:
