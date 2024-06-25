@@ -44,7 +44,7 @@
     <script src="js/bootstrap.bundle.min.js"></script>
     <!-- Load WebSocket script -->
     <script>
-        const ws_uri = "<?php echo 'ws://' . $ws_host . ':' . $ws_port; ?>";
+        const ws_uri = "ws://localhost:8000"; // Ajuste para localhost para teste
     </script>
     <script src="js/websockets.js" defer></script>
 </body>
