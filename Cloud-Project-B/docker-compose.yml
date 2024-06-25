@@ -5,20 +5,17 @@ services:
     image: cloud-project-b-web
     deploy:
       replicas: 3
-      update_config:
-        parallelism: 2
-        delay: 10s
       restart_policy:
         condition: on-failure
     ports:
       - "80:80"
     networks:
-      - webnet
+      - custom_network
 
   db:
     image: cloud-project-b-db
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: on-failure
     environment:
@@ -28,22 +25,19 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - webnet
+      - custom_network
 
   ws:
     image: cloud-project-b-ws
     deploy:
-      replicas: 3
-      update_config:
-        parallelism: 2
-        delay: 10s
+      replicas: 1
       restart_policy:
         condition: on-failure
     ports:
       - "8000:8000"
     networks:
-      - webnet
+      - custom_network
 
 networks:
-  webnet:
+  custom_network:
     driver: overlay
