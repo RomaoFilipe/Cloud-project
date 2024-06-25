@@ -2,31 +2,48 @@ version: '3.8'
 
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
+    image: cloud-project-b-web
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     ports:
       - "80:80"
-    depends_on:
-      - db
-      - ws
+    networks:
+      - webnet
 
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile.db
+    image: cloud-project-b-db
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydatabase
     ports:
       - "5432:5432"
+    networks:
+      - webnet
 
   ws:
-    build:
-      context: .
-      dockerfile: Dockerfile.ws
+    image: cloud-project-b-ws
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     ports:
       - "8000:8000"
-    depends_on:
-      - db
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: overlay
