@@ -1,48 +1,31 @@
 version: '3.8'
 
 services:
-  webapp:
-    image: webapp_frj:latest
-    deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-    networks:
-      - webnet
-    environment:
-      DATABASE_URL: postgres://myuser:mypassword@db:5432/mydatabase
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "80:80"
+    depends_on:
+      - db
 
   db:
-    image: postgres:13
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydatabase
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - webnet
-    deploy:
-      placement:
-        constraints: [node.role == manager]
-
-  nginx:
-    image: nginx_frj:latest
     ports:
-      - "80:80"
-    networks:
-      - webnet
+      - "5432:5432"
 
-networks:
-  webnet:
-
-volumes:
-  db_data:
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile.ws
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
